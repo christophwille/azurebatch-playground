@@ -27,7 +27,7 @@ jobs:
       run: dotnet publish ./src/BatchTaskApp --configuration Release --output ${{ env.BATCH_APP_PACKAGE_PATH }}
 
     - name: Zip App Package
-      run: 7z a -tzip ${{ env.BATCH_APP_PACKAGE_PATH }}/batchtaskapp.zip '${{ env.BATCH_APP_PACKAGE_PATH }}/*'
+      run: 7z a -tzip '${{ env.BATCH_APP_PACKAGE_PATH }}/batchtaskapp.zip' '${{ env.BATCH_APP_PACKAGE_PATH }}/*'
       
     - uses: azure/login@v1
       with:
@@ -48,5 +48,5 @@ jobs:
       with:
         azcliversion: latest
         inlineScript: |
-          az batch application package create --application-name ${{ env.STAGE_BATCH_APP_PACKAGE_NAME }} --version-name ${{ github.run_number }} --package-file ${{ env.BATCH_APP_PACKAGE_PATH }}/batchtaskapp.zip -n ${{ env.BATCH_ACCOUNT_NAME }} -g ${{ env.BATCH_RESOURCE_GROUP }}
+          az batch application package create --application-name ${{ env.STAGE_BATCH_APP_PACKAGE_NAME }} --version-name ${{ github.run_number }} --package-file '${{ env.BATCH_APP_PACKAGE_PATH }}/batchtaskapp.zip' -n ${{ env.BATCH_ACCOUNT_NAME }} -g ${{ env.BATCH_RESOURCE_GROUP }}
           az batch application set --application-name ${{ env.STAGE_BATCH_APP_PACKAGE_NAME }} --default-version ${{ github.run_number }} -n ${{ env.BATCH_ACCOUNT_NAME }} -g ${{ env.BATCH_RESOURCE_GROUP }}
