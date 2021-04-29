@@ -1,10 +1,10 @@
-name: Simple CI/CD for main (multi-job)
+name: Release-based CD to all stages
 
 on:
-  workflow_dispatch: {}
+  release:
+    types: [published]
 
 env:
-  STAGE: dev
   KEYVAULT_NAME: ghaction-deploy-credscwi
   BATCH_APP_PACKAGE_NAME: BatchTaskApp
   BATCH_ACCOUNT_NAME: cwiazbatchtest
@@ -36,12 +36,51 @@ jobs:
         name: ${{ env.BUILD_ARTIFACT_NAME }}
         path: ${{ env.BATCH_APP_PACKAGE_PATH }}/batchtaskapp.zip
 
-  deploy:
+  deploy_test:
     runs-on: ubuntu-latest
     needs: [build]
     env:
       BATCH_APP_PACKAGE_PATH: thepackagepath
+      STAGE: test
+    environment: 
+      name: test
+    steps: 
+    - name: Download artifact
+      uses: actions/download-artifact@v1
+      with:
+        name: ${{ env.BUILD_ARTIFACT_NAME }}
+        path: ${{ env.BATCH_APP_PACKAGE_PATH }}  
 
+    - uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    - uses: Azure/get-keyvault-secrets@v1
+      id: keyvaultaction
+      with:
+        keyvault: ${{ env.KEYVAULT_NAME }}
+        secrets: "AZURE-CREDS"
+    - uses: azure/login@v1
+      with:
+        creds: ${{ steps.keyvaultaction.outputs.AZURE-CREDS }}
+
+    - name: Azure CLI script
+      uses: azure/CLI@v1
+      env:
+        STAGE_BATCH_APP_PACKAGE_NAME: '${{ env.BATCH_APP_PACKAGE_NAME }}-${{ env.STAGE }}'
+      with:
+        azcliversion: latest
+        inlineScript: |
+          az batch application package create --application-name ${{ env.STAGE_BATCH_APP_PACKAGE_NAME }} --version-name ${{ github.run_number }} --package-file '${{ env.BATCH_APP_PACKAGE_PATH }}/batchtaskapp.zip' -n ${{ env.BATCH_ACCOUNT_NAME }} -g ${{ env.BATCH_RESOURCE_GROUP }}
+          az batch application set --application-name ${{ env.STAGE_BATCH_APP_PACKAGE_NAME }} --default-version ${{ github.run_number }} -n ${{ env.BATCH_ACCOUNT_NAME }} -g ${{ env.BATCH_RESOURCE_GROUP }}
+
+  deploy_prod:
+    runs-on: ubuntu-latest
+    needs: [deploy_test]
+    env:
+      BATCH_APP_PACKAGE_PATH: thepackagepath
+      STAGE: prod
+    environment: 
+      name: prod
     steps: 
     - name: Download artifact
       uses: actions/download-artifact@v1
