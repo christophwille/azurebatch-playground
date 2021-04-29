@@ -38,6 +38,7 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
+    needs: [build]
     env:
       BATCH_APP_PACKAGE_PATH: ${{ github.workspace }}/.app
 
