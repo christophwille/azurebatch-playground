@@ -1,11 +1,17 @@
-name: .NET
+name: Simple CI/CD for main
 
 on:
   workflow_dispatch: {}
 
+env:
+  STAGE: dev
+  KEYVAULT_NAME: ghaction-deploy-credscwi
+  BATCH_APP_PACKAGE_NAME: BatchTaskApp-${{ env.STAGE }}
+  BATCH_ACCOUNT_NAME: cwiazbatchtest
+  BATCH_RESOURCE_GROUP: rg-ghaction-cwi-tests
+
 jobs:
   build:
-
     runs-on: ubuntu-latest
     env:
       BATCH_APP_PACKAGE_PATH: ${{ github.workspace }}/.app
@@ -23,8 +29,22 @@ jobs:
     - name: Zip App Package
       run: 7z a -tzip ${{ env.BATCH_APP_PACKAGE_PATH }}/batchtaskapp.zip '${{ env.BATCH_APP_PACKAGE_PATH }}/*'
       
-    - name: Upload artifact
-      uses: actions/upload-artifact@v2
+    - uses: azure/login@v1
       with:
-        name: Batch Task App Package
-        path: ${{ env.BATCH_APP_PACKAGE_PATH }}/batchtaskapp.zip
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    - uses: Azure/get-keyvault-secrets@v1
+      id: keyvaultaction
+      with:
+        keyvault: ${{ env.KEYVAULT_NAME }}
+        secrets: "AZURE-CREDS"
+    - uses: azure/login@v1
+      with:
+        creds: ${{ steps.keyvaultaction.outputs.AZURE-CREDS }}
+
+    - name: Azure CLI script
+      uses: azure/CLI@v1
+      with:
+        azcliversion: latest
+        inlineScript: |
+          az batch application package create --application-name ${{ env.BATCH_APP_PACKAGE_NAME }} --version-name ${{ env.GITHUB_RUN_NUMBER }} --package-file ${{ env.BATCH_APP_PACKAGE_PATH }}/batchtaskapp.zip -n ${{ env.BATCH_ACCOUNT_NAME }} -g ${{ env.BATCH_RESOURCE_GROUP }}
+          az batch application set --application-name ${{ env.BATCH_APP_PACKAGE_NAME }} --default-version ${{ env.GITHUB_RUN_NUMBER }} -n ${{ env.BATCH_ACCOUNT_NAME }} -g ${{ env.BATCH_RESOURCE_GROUP }}
