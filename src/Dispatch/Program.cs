@@ -25,7 +25,7 @@ namespace Dispatch
 		[Required]
 		public string BatchAccountKey { get; }
 
-		const string BatchAppNameByConvention = "BatchTaskApp";
+		const string BatchAppNameByConvention = "BatchTaskApp-dev";
 		const string BatchAppExecutableByConvention = "batchtaskapp.exe";
 		const string BatchJobNameByConvention = "singlejob";
 
