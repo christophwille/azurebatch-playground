@@ -1,0 +1,30 @@
+name: .NET
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    env:
+      BATCH_APP_PACKAGE_PATH: ${{ github.workspace }}/.app
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 5.0.x
+        
+    - name: Create App Package
+      run: dotnet publish ./src/BatchTaskApp --configuration Release --output ${{ env.BATCH_APP_PACKAGE_PATH }}
+
+#    - name: Zip App Package
+#      run: 7z a -tzip ${{ env.BATCH_APP_PACKAGE_PATH }}/batchtaskapp.zip '${{ env.BATCH_APP_PACKAGE_PATH }}/*'
+      
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: Batch Task App Package
+        path: ${{ env.BATCH_APP_PACKAGE_PATH }}
