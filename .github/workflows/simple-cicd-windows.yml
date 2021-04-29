@@ -1,0 +1,52 @@
+name: Simple CI/CD for main (Windows)
+
+on:
+  workflow_dispatch: {}
+
+env:
+  STAGE: dev
+  KEYVAULT_NAME: ghaction-deploy-credscwi
+  BATCH_APP_PACKAGE_NAME: BatchTaskApp
+  BATCH_ACCOUNT_NAME: cwiazbatchtest
+  BATCH_RESOURCE_GROUP: rg-ghaction-cwi-tests
+
+jobs:
+  build:
+    runs-on: windows-latest
+    env:
+      BATCH_APP_PACKAGE_PATH: ${{ github.workspace }}/.app
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 5.0.x
+        
+    - name: Create App Package
+      run: dotnet publish ./src/BatchTaskApp --configuration Release --output ${{ env.BATCH_APP_PACKAGE_PATH }}
+
+    - name: Zip App Package
+      run: 7z a -tzip '${{ env.BATCH_APP_PACKAGE_PATH }}/batchtaskapp.zip' '${{ env.BATCH_APP_PACKAGE_PATH }}/*'
+      
+    - uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    - uses: Azure/get-keyvault-secrets@v1
+      id: keyvaultaction
+      with:
+        keyvault: ${{ env.KEYVAULT_NAME }}
+        secrets: "AZURE-CREDS"
+    - uses: azure/login@v1
+      with:
+        creds: ${{ steps.keyvaultaction.outputs.AZURE-CREDS }}
+
+    - name: Azure CLI script
+      uses: azure/CLI@v1
+      env:
+        STAGE_BATCH_APP_PACKAGE_NAME: '${{ env.BATCH_APP_PACKAGE_NAME }}-${{ env.STAGE }}'
+      with:
+        azcliversion: latest
+        inlineScript: |
+          az batch application package create --application-name ${{ env.STAGE_BATCH_APP_PACKAGE_NAME }} --version-name ${{ github.run_number }} --package-file '${{ env.BATCH_APP_PACKAGE_PATH }}/batchtaskapp.zip' -n ${{ env.BATCH_ACCOUNT_NAME }} -g ${{ env.BATCH_RESOURCE_GROUP }}
+          az batch application set --application-name ${{ env.STAGE_BATCH_APP_PACKAGE_NAME }} --default-version ${{ github.run_number }} -n ${{ env.BATCH_ACCOUNT_NAME }} -g ${{ env.BATCH_RESOURCE_GROUP }}
