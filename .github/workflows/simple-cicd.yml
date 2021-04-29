@@ -48,5 +48,5 @@ jobs:
       with:
         azcliversion: latest
         inlineScript: |
-          az batch application package create --application-name ${{ env.BATCH_APP_PACKAGE_NAME }} --version-name ${{ env.GITHUB_RUN_NUMBER }} --package-file ${{ env.BATCH_APP_PACKAGE_PATH }}/batchtaskapp.zip -n ${{ env.BATCH_ACCOUNT_NAME }} -g ${{ env.BATCH_RESOURCE_GROUP }}
-          az batch application set --application-name ${{ env.BATCH_APP_PACKAGE_NAME }} --default-version ${{ env.GITHUB_RUN_NUMBER }} -n ${{ env.BATCH_ACCOUNT_NAME }} -g ${{ env.BATCH_RESOURCE_GROUP }}
+          az batch application package create --application-name ${{ env.STAGE_BATCH_APP_PACKAGE_NAME }} --version-name ${{ github.run_number }} --package-file ${{ env.BATCH_APP_PACKAGE_PATH }}/batchtaskapp.zip -n ${{ env.BATCH_ACCOUNT_NAME }} -g ${{ env.BATCH_RESOURCE_GROUP }}
+          az batch application set --application-name ${{ env.STAGE_BATCH_APP_PACKAGE_NAME }} --default-version ${{ github.run_number }} -n ${{ env.BATCH_ACCOUNT_NAME }} -g ${{ env.BATCH_RESOURCE_GROUP }}
