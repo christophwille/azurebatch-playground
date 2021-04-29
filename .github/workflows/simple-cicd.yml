@@ -6,7 +6,7 @@ on:
 env:
   STAGE: dev
   KEYVAULT_NAME: ghaction-deploy-credscwi
-  BATCH_APP_PACKAGE_NAME: BatchTaskApp"
+  BATCH_APP_PACKAGE_NAME: BatchTaskApp
   BATCH_ACCOUNT_NAME: cwiazbatchtest
   BATCH_RESOURCE_GROUP: rg-ghaction-cwi-tests
 
@@ -43,8 +43,8 @@ jobs:
 
     - name: Azure CLI script
       uses: azure/CLI@v1
-#      env:
-#        STAGE_BATCH_APP_PACKAGE_NAME: '${{ env.BATCH_APP_PACKAGE_NAME }}-${{ env.STAGE }}'
+      env:
+        STAGE_BATCH_APP_PACKAGE_NAME: '${{ env.BATCH_APP_PACKAGE_NAME }}-${{ env.STAGE }}'
       with:
         azcliversion: latest
         inlineScript: |
