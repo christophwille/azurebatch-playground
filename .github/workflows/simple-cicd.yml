@@ -20,11 +20,11 @@ jobs:
     - name: Create App Package
       run: dotnet publish ./src/BatchTaskApp --configuration Release --output ${{ env.BATCH_APP_PACKAGE_PATH }}
 
-#    - name: Zip App Package
-#      run: 7z a -tzip ${{ env.BATCH_APP_PACKAGE_PATH }}/batchtaskapp.zip '${{ env.BATCH_APP_PACKAGE_PATH }}/*'
+    - name: Zip App Package
+      run: 7z a -tzip ${{ env.BATCH_APP_PACKAGE_PATH }}/batchtaskapp.zip '${{ env.BATCH_APP_PACKAGE_PATH }}/*'
       
     - name: Upload artifact
       uses: actions/upload-artifact@v2
       with:
         name: Batch Task App Package
-        path: ${{ env.BATCH_APP_PACKAGE_PATH }}
+        path: ${{ env.BATCH_APP_PACKAGE_PATH }}/batchtaskapp.zip
