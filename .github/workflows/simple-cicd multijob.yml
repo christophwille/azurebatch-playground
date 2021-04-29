@@ -1,7 +1,4 @@
-# Run azure/CLI@v1
-#  Error: Please use Linux based OS as a runner.
-
-name: Simple CI/CD for main (Windows)
+name: Simple CI/CD for main (multi-job)
 
 on:
   workflow_dispatch: {}
@@ -12,10 +9,11 @@ env:
   BATCH_APP_PACKAGE_NAME: BatchTaskApp
   BATCH_ACCOUNT_NAME: cwiazbatchtest
   BATCH_RESOURCE_GROUP: rg-ghaction-cwi-tests
+  BUILD__ARTIFACT_NAME: batchtask
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     env:
       BATCH_APP_PACKAGE_PATH: ${{ github.workspace }}/.app
 
@@ -31,7 +29,25 @@ jobs:
 
     - name: Zip App Package
       run: 7z a -tzip '${{ env.BATCH_APP_PACKAGE_PATH }}/batchtaskapp.zip' '${{ env.BATCH_APP_PACKAGE_PATH }}/*'
-      
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{ env.BUILD__ARTIFACT_NAME }}
+        path: ${{ env.BATCH_APP_PACKAGE_PATH }}/batchtaskapp.zip
+
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      BATCH_APP_PACKAGE_PATH: ${{ github.workspace }}/.app
+
+    steps: 
+    - name: Download artifact
+      uses: actions/download-artifact@v1
+      with:
+        name: ${{ env.BUILD__ARTIFACT_NAME }}
+        path: ${{ env.BATCH_APP_PACKAGE_PATH }}  
+
     - uses: azure/login@v1
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
